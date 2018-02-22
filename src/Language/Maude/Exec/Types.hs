@@ -23,8 +23,9 @@ module Language.Maude.Exec.Types
     -- * Result types
     , MaudeResult(..)
     , RewriteResult(..)
+    , SearchXMLog(..)
     , SearchResult(..)
-    , SearchResults
+    , SearchXMLogs
     , Substitution(..)
     , MaudeStatistics(..)
     ) where
@@ -100,15 +101,20 @@ data RewriteResult = RewriteResult
     -- ^ Statistics about the rewrite performed
     } deriving (Eq, Ord, Show, Data, Typeable)
 
--- | High-level search result
-data SearchResult = SearchResult
+data SearchXMLog = SearchXMLog
     { searchSolutionNumber :: Integer
     , searchStatistics     :: MaudeStatistics
-    , searchResult         :: Substitution
+    , searchSubstitution   :: Substitution
+    } deriving (Eq, Ord, Show, Data, Typeable)
+                   
+-- | High-level search result
+data SearchResult = SearchResult
+    { searchOut            :: Text
+    , searchXMLog          :: [SearchXMLog]
     } deriving (Eq, Ord, Show, Data, Typeable)
 
--- | Several search results
-type SearchResults = [SearchResult]
+-- | Several xml logs
+type SearchXMLogs = [SearchXMLog]
 
 -- | Search result substitution
 data Substitution = Substitution Term Term

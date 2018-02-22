@@ -1,11 +1,12 @@
 module Language.Maude.Exec.XML
     ( Parser(..)
     , parseRewriteResult
-    , parseSearchResults
+    , parseSearchXMLogs
     ) where
 
 import Control.Monad
 import Text.XML.Light
+import Data.Text
 
 import Language.Maude.Syntax
 import Language.Maude.Exec.Types
@@ -35,10 +36,10 @@ parseRewriteResult :: Element -> Parser RewriteResult
 parseRewriteResult e = parseRewriteResult' =<< child "result" e
 
 -- <maudeml> (root)
-parseSearchResults :: Element -> Parser SearchResults
-parseSearchResults e = case results of
+parseSearchXMLogs :: Element -> Parser SearchXMLogs
+parseSearchXMLogs e = case results of
     [] -> ParseError e "no search results found"
-    _  -> mapM parseSearchResult =<< actualResults
+    _  -> mapM parseSearchXMLog =<< actualResults
   where
     results = findChildren (unqual "search-result") e
     actualResults = filterM notNone results
@@ -65,15 +66,15 @@ parseStatistics e = do
     return $ MaudeStatistics rews real cpu
 
 -- <search-result>
-parseSearchResult :: Element -> Parser SearchResult
-parseSearchResult e = do
+parseSearchXMLog :: Element -> Parser SearchXMLog
+parseSearchXMLog e = do
     solution <- readattr "solution-number" e
     stats <- parseStatistics e
     subst <- parseSubstitution =<< child "substitution" e
-    return $ SearchResult
+    return $ SearchXMLog
         { searchSolutionNumber = solution
         , searchStatistics = stats
-        , searchResult = subst
+        , searchSubstitution = subst
         }
 
 -- <substitution>

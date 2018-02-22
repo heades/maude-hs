@@ -45,12 +45,12 @@ import Text.XML.Light
 import Language.Maude.Exec.Types
 import Language.Maude.Exec.XML
 
-execMaude :: (Element -> Parser a) -> [FilePath] -> MaudeCommand -> IO a
+execMaude :: (Text -> Element -> Parser a) -> [FilePath] -> MaudeCommand -> IO a
 execMaude parser files cmd = do    
   maudeResult <- runMaude defaultConf{ loadFiles = files } cmd
   let maybeXml = parseXMLDoc $ maudeXmlLog maudeResult
   xml <- maybe (throwIO LogToXmlFailure) return maybeXml
-  case (parser xml) of
+  case (parser (maudeStdout maudeResult) xml) of
     ParseError e s -> throwIO $ XmlToResultFailure s e
     Ok a -> return a
     
@@ -58,7 +58,7 @@ execMaude parser files cmd = do
 --
 -- This function may throw a 'MaudeException'.
 rewrite :: [FilePath] -> Text -> IO RewriteResult
-rewrite files term = execMaude parseRewriteResult files $ Rewrite term
+rewrite files term = execMaude (\_ -> parseRewriteResult) files $ Rewrite term
 
 -- | @search files term pattern@ uses Maude (with @files@ loaded) to search
 -- for all reachable states starting from @term@ and matching the given
@@ -70,11 +70,12 @@ rewrite files term = execMaude parseRewriteResult files $ Rewrite term
 -- runs the Maude command @search term =>! N:Nat@.
 --
 -- This function may throw a 'MaudeException'.
-search :: [FilePath] -> Text -> Text -> IO SearchResults
-search files term pattern = execMaude parseSearchResults files $ Search term pattern
-
-loop :: [FilePath] -> Text -> IO SearchResults
-loop files term = undefined
+search :: [FilePath] -> Text -> Text -> IO SearchResult
+search files term pattern = execMaude searchParser files $ Search term pattern
+ where
+   searchParser out xml = do
+     xmlogs <- parseSearchXMLogs xml
+     return $ SearchResult out xmlogs
                 
 -- | @runMaude conf cmd@ performs the Maude command @cmd@ using the
 -- configuration @conf@.
@@ -95,11 +96,8 @@ runMaude conf cmd = do
                 , maudeFailureStderr = err
                 , maudeFailureStdout = out
                 }
-        xmlText <- T.readFile xmlFile
-        return $ MaudeResult
-            { maudeStdout = out
-            , maudeXmlLog = xmlText
-            }
+        xmlText <- T.readFile xmlFile                
+        return $ MaudeResult { maudeStdout = out, maudeXmlLog = xmlText }
 
 -- | Default Maude configuration
 defaultConf :: MaudeConf
