@@ -79,11 +79,13 @@ parseSearchXMLog e = do
 
 -- <substitution>
 parseSubstitution :: Element -> Parser Substitution
-parseSubstitution e = do
-    assignment <- child "assignment" e
-    -- TODO: better error handling
-    [s, t] <- mapM parseTerm (elChildren assignment)
-    return $ Substitution s t
+parseSubstitution e = do    
+    case strContent e of
+      [] -> return Empty
+      _ -> do assignment <- child "assignment" e
+              -- TODO: better error handling              
+              [s, t] <- mapM parseTerm $ elChildren assignment
+              return $ Substitution s t
 
 -- <term>
 parseTerm :: Element -> Parser Term

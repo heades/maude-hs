@@ -117,7 +117,7 @@ data SearchResult = SearchResult
 type SearchXMLogs = [SearchXMLog]
 
 -- | Search result substitution
-data Substitution = Substitution Term Term
+data Substitution = Empty | Substitution Term Term
     deriving (Eq, Ord, Show, Data, Typeable)
 
 -- | Statistics returned by Maude after a successful command
